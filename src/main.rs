@@ -1,4 +1,5 @@
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_until},
     multi::{many0, many1},
     sequence::tuple,
@@ -6,41 +7,31 @@ use nom::{
 };
 
 #[derive(Debug)]
-struct Header<'a> {
-    level: usize,
-    title: &'a str,
+enum Markdown<'a> {
+    Header { level: usize, title: &'a str },
+    Paragraph { body: &'a str },
 }
 
-fn header(input: &str) -> IResult<&str, Header> {
-    let mut parser = tuple((
-        many1(tag("#")),
-        many0(tag(" ")),
-        take_until("\n"),
-    ));
+fn parse(input: &str) -> IResult<&str, Vec<Markdown>> {
+    many1(alt((header, paragraph)))(input)
+}
+
+fn header(input: &str) -> IResult<&str, Markdown> {
+    let mut parser = tuple((many1(tag("#")), many0(tag(" ")), take_until("\n")));
     let (input, (hashtags, _, title)) = parser(input)?;
     let level = hashtags.len();
-    Ok((input, Header { level, title }))
+    Ok((input, Markdown::Header { level, title }))
 }
 
-#[derive(Debug)]
-struct Paragraph<'a> {
-    body: &'a str,
-}
-
-fn paragraph(input: &str) -> IResult<&str, Paragraph> {
-    let mut parser = tuple((
-        tag("\n\n"),
-        take_until("\n\n"),
-        many1(tag("\n")),
-    ));
+fn paragraph(input: &str) -> IResult<&str, Markdown> {
+    let mut parser = tuple((tag("\n\n"), take_until("\n\n"), tag("\n\n")));
     let (input, (_, body, _)) = parser(input)?;
-    Ok((input, Paragraph { body }))
+    Ok((input, Markdown::Paragraph { body }))
 }
 
 fn main() {
-    let mut parse = tuple((
-        header, paragraph
-    ));
-    let output = parse("### This is a header\n\nThis is a paragraph\nI like paragraph\n\n");
-    println!("{:?}", output);
+    let input = include_str!("../examples/basic.md");
+    let trimmed = format!("{}\n", input);
+    let output = parse(&trimmed).unwrap();
+    println!("{:#?}", output);
 }
