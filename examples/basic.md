@@ -13,3 +13,19 @@ For another example, here's ordered list:
 1. I am a list with number 2
 4. I am a list with number 3
 3. I am a list with number 4
+
+Here comes the source code:
+
+```rust
+int main() {
+    return 0;
+}
+```
+
+Empty list:
+
+-
+-
+-
+
+Cool stuff.
