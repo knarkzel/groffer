@@ -1,6 +1,6 @@
 # Header
 
-This is a paragraph.
+This is a paragraph. It has **bold** text.
 Here comes my new list:
 
 - Item 1
@@ -21,6 +21,8 @@ int main() {
     return 0;
 }
 ```
+
+---
 
 Empty list:
 

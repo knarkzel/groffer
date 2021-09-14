@@ -6,4 +6,3 @@ edition = "2018"
 [dependencies]
 nom = "7.0.0"
 color-backtrace = "0.5.1"
-structopt = "0.3.23"
