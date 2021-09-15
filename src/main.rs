@@ -81,6 +81,7 @@ fn source_code(input: &str) -> IResult<&str, Block> {
 #[derive(Debug)]
 enum Inline {
     Plain { line: String },
+    Italic { line: String },
     Bold { line: String },
 }
 
@@ -90,7 +91,17 @@ fn parse_text(input: &str) -> IResult<&str, Block> {
 }
 
 fn parse_inline(input: &str) -> IResult<&str, Inline> {
-    alt((bold, plain))(input)
+    alt((bold, italics, plain))(input)
+}
+
+fn italics(input: &str) -> IResult<&str, Inline> {
+    let (input, line) = delimited(tag("*"), take_until("*"), tag("*"))(input)?;
+    Ok((
+        input,
+        Inline::Italic {
+            line: line.to_string(),
+        },
+    ))
 }
 
 fn bold(input: &str) -> IResult<&str, Inline> {

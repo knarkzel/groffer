@@ -1,7 +1,7 @@
 # Header
 
 This is a paragraph. It has **bold** text.
-Here comes my new list:
+Also has *italics*. Here comes my new list:
 
 - Item 1
 - Item 2
