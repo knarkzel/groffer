@@ -1,4 +1,4 @@
-# Header
+## Header
 
 This is a paragraph. It has **bold** text.
 Also has *italics*. Here comes my new list:
@@ -47,3 +47,10 @@ This `code` is sick.
 
 You should go to [Link](http://a.com) for more!
 Also check this ![Image](http://cat.com) lol!
+
+Some math $1 + 2 = 3$. Amazing!
+
+$$$
+1 + 1 = 2;
+4 + 4 = 8;
+$$$

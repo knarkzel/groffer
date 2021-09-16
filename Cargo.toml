@@ -1,8 +1,10 @@
 [package]
-name = "groffer"
+name = "gf"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
 nom = "7.0.0"
+anyhow = "1.0.44"
+structopt = "0.3.23"
 color-backtrace = "0.5.1"
