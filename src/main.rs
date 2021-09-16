@@ -15,6 +15,7 @@ enum Block<'a> {
     SourceCode { language: &'a str, code: &'a str },
     UnorderedList { items: Vec<&'a str> },
     OrderedList { items: Vec<&'a str> },
+    Quote { items: Vec<&'a str> },
     Line { items: Vec<Inline> },
 }
 
@@ -37,8 +38,16 @@ fn parse_block(input: &str) -> IResult<&str, Vec<Block>> {
         unordered_list,
         ordered_list,
         source_code,
+        quote,
         parse_text,
     )))(input)
+}
+
+fn quote(input: &str) -> IResult<&str, Block> {
+    let trash = tuple((multispace0, tag(">"), space0));
+    let quotes = delimited(trash, take_until("\n"), multispace0);
+    let (input, items) = many1(quotes)(input)?;
+    Ok((input, Block::Quote { items }))
 }
 
 fn header(input: &str) -> IResult<&str, Block> {
@@ -50,7 +59,7 @@ fn header(input: &str) -> IResult<&str, Block> {
 
 fn ordered_list(input: &str) -> IResult<&str, Block> {
     let list_tag = delimited(
-        tuple((digit1, tag("."), space0)),
+        tuple((digit1, alt((tag("."), tag(")"))), space0)),
         take_until("\n"),
         take(1usize),
     );
@@ -59,7 +68,11 @@ fn ordered_list(input: &str) -> IResult<&str, Block> {
 }
 
 fn unordered_list(input: &str) -> IResult<&str, Block> {
-    let list_tag = delimited(pair(tag("-"), space0), take_until("\n"), take(1usize));
+    let list_tag = delimited(
+        pair(alt((tag("-"), tag("*"))), space0),
+        take_until("\n"),
+        take(1usize),
+    );
     let (input, items) = many1(list_tag)(input)?;
     Ok((input, Block::UnorderedList { items }))
 }
@@ -83,6 +96,9 @@ enum Inline {
     Plain { line: String },
     Italic { line: String },
     Bold { line: String },
+    Pre { line: String },
+    Link { name: String, url: String },
+    Image { name: String, url: String },
 }
 
 fn parse_text(input: &str) -> IResult<&str, Block> {
@@ -91,7 +107,57 @@ fn parse_text(input: &str) -> IResult<&str, Block> {
 }
 
 fn parse_inline(input: &str) -> IResult<&str, Inline> {
-    alt((bold, italics, plain))(input)
+    alt((image, link, pre, bold, italics, plain))(input)
+}
+
+fn plain(input: &str) -> IResult<&str, Inline> {
+    let (input, line) = map(
+        many1(preceded(
+            not(alt((tag("!["), tag("["), tag("`"), tag("*"), tag("\n")))),
+            take(1u8),
+        )),
+        |letters| letters.join(""),
+    )(input)?;
+    Ok((input, Inline::Plain { line }))
+}
+
+fn link(input: &str) -> IResult<&str, Inline> {
+    let (input, (name, url)) = link_image(input)?;
+    Ok((
+        input,
+        Inline::Link {
+            name: name.to_string(),
+            url: url.to_string(),
+        },
+    ))
+}
+
+fn image(input: &str) -> IResult<&str, Inline> {
+    let (input, (name, url)) = preceded(tag("!"), link_image)(input)?;
+    Ok((
+        input,
+        Inline::Image {
+            name: name.to_string(),
+            url: url.to_string(),
+        },
+    ))
+}
+
+fn link_image(input: &str) -> IResult<&str, (&str, &str)> {
+    let link = delimited(tag("["), take_until("]"), tag("]"));
+    let href = delimited(tag("("), take_until(")"), tag(")"));
+    let (input, part) = pair(link, href)(input)?;
+    Ok((input, part))
+}
+
+fn pre(input: &str) -> IResult<&str, Inline> {
+    let (input, line) = delimited(tag("`"), take_until("`"), tag("`"))(input)?;
+    Ok((
+        input,
+        Inline::Pre {
+            line: line.to_string(),
+        },
+    ))
 }
 
 fn italics(input: &str) -> IResult<&str, Inline> {
@@ -112,14 +178,6 @@ fn bold(input: &str) -> IResult<&str, Inline> {
             line: line.to_string(),
         },
     ))
-}
-
-fn plain(input: &str) -> IResult<&str, Inline> {
-    let (input, line) = map(
-        many1(preceded(not(alt((tag("*"), tag("\n")))), take(1u8))),
-        |letters| letters.join(""),
-    )(input)?;
-    Ok((input, Inline::Plain { line }))
 }
 
 fn main() {
