@@ -1,0 +1,8 @@
+[package]
+name = "fuzzer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+afl = "0.10.1"
+parser = { path = "../parser" }
